@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/draw"
 	"os"
+	"time"
 
 	"github.com/starillume/ase"
 )
@@ -29,7 +30,7 @@ func main() {
 	}
 
 	width, height := int(asef.Header.Width), int(asef.Header.Height)
-	renderFrame(composeFrameImages(width, height, getFrameImages(asef.Frames[0], width, height)))
+	renderAnimation(asef.Frames, width, height)
 }
 
 func getFrameImages(frame ase.Frame, width int, height int) []image.Image {
@@ -82,5 +83,15 @@ func renderFrame(img image.Image) {
 			fmt.Print("\x1b[0m")
 		}
 		fmt.Print("\n")
+	}
+}
+
+func renderAnimation(frames []ase.Frame, width int, height int) {
+	for {
+		for _, frame := range frames {
+			fmt.Print("\033[2J\033[H")
+			renderFrame(composeFrameImages(width, height, getFrameImages(frame, width, height)))
+			time.Sleep(time.Millisecond * time.Duration(frame.Header.FrameDuration))
+		}
 	}
 }

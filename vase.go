@@ -29,7 +29,7 @@ func main() {
 	}
 
 	width, height := int(asef.Header.Width), int(asef.Header.Height)
-	renderImage(composeFrameImages(width, height, getFrameImages(asef.Frames[0], width, height)))
+	renderFrame(composeFrameImages(width, height, getFrameImages(asef.Frames[0], width, height)))
 }
 
 func getFrameImages(frame ase.Frame, width int, height int) []image.Image {
@@ -55,17 +55,32 @@ func composeFrameImages(baseWidth int, baseHeight int, imgs []image.Image) image
 	return final
 }
 
-func renderImage(img image.Image) {
+func renderFrame(img image.Image) {
 	bounds := img.Bounds()
+	var lastColored bool
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		lastColored = false
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			r, g, b, a := img.At(x, y).RGBA()
 			if a < 0x8000 {
+				if lastColored {
+					fmt.Print("\x1b[0m")
+					lastColored = false
+				}
 				fmt.Print(" ")
 				continue
 			}
+
+			if !lastColored {
+				lastColored = true
+			}
+
 			fmt.Printf("\x1b[48;2;%d;%d;%dm ", r>>8, g>>8, b>>8)
 		}
-		fmt.Print("\x1b[0m\n")
+
+		if lastColored {
+			fmt.Print("\x1b[0m")
+		}
+		fmt.Print("\n")
 	}
 }

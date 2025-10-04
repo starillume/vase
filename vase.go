@@ -32,7 +32,13 @@ func main() {
 	}
 	
 	handleInterrupt()
-	renderAnimation(asef.Frames, int(asef.Header.Width), int(asef.Header.Height))
+
+	width, height := int(asef.Header.Width), int(asef.Header.Height)
+	if len(asef.Frames) > 1 {
+		renderAnimation(asef.Frames, width, height)
+	} else {
+		renderFrame(composeFrameImages(width, height, getFrameImages(asef.Frames[0], width, height)))
+	}
 }
 
 func handleInterrupt() {

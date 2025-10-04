@@ -5,6 +5,8 @@ import (
 	"image"
 	"image/draw"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/starillume/ase"
@@ -28,9 +30,20 @@ func main() {
 		fmt.Println("error: could not deserialize ase file: ", err)
 		os.Exit(1)
 	}
+	
+	handleInterrupt()
+	renderAnimation(asef.Frames, int(asef.Header.Width), int(asef.Header.Height))
+}
 
-	width, height := int(asef.Header.Width), int(asef.Header.Height)
-	renderAnimation(asef.Frames, width, height)
+func handleInterrupt() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func () {
+		<-c
+		fmt.Print("\033[?25h")
+		fmt.Print("\033[0m")
+		os.Exit(0)
+	}()
 }
 
 func getFrameImages(frame ase.Frame, width int, height int) []image.Image {
@@ -87,6 +100,7 @@ func renderFrame(img image.Image) {
 }
 
 func renderAnimation(frames []ase.Frame, width int, height int) {
+	fmt.Print("\033[?25l")
 	for {
 		for _, frame := range frames {
 			fmt.Print("\033[2J\033[H")

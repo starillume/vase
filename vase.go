@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"image"
-	"image/draw"
 	"os"
 	"os/signal"
 	"syscall"
@@ -37,7 +36,7 @@ func main() {
 	if len(asef.Frames) > 1 {
 		renderAnimation(asef.Frames, width, height)
 	} else {
-		renderFrame(composeFrameImages(width, height, getFrameImages(asef.Frames[0], width, height)))
+		renderFrame(asef.Frames[0].Image)
 	}
 }
 
@@ -50,29 +49,6 @@ func handleInterrupt() {
 		fmt.Print("\033[0m")
 		os.Exit(0)
 	}()
-}
-
-func getFrameImages(frame ase.Frame, width int, height int) []image.Image {
-	imgs := make([]image.Image, 0)
-	for _, chunk := range frame.Chunks {
-		if chunk.GetType() == ase.CelChunkHex {
-			celChunk := chunk.(*ase.ChunkCelImage)
-			pixelsRGBA := celChunk.ChunkCelRawImageData.Pixels.(ase.PixelsRGBA)
-			img := pixelsRGBA.ToImage(int(celChunk.X), int(celChunk.Y), int(celChunk.ChunkCelDimensionData.Width), int(celChunk.ChunkCelDimensionData.Height), width, height)
-			imgs = append(imgs, img)
-		}
-	}
-
-	return imgs
-}
-
-func composeFrameImages(baseWidth int, baseHeight int, imgs []image.Image) image.Image {
-	final := image.NewRGBA(image.Rect(0, 0, baseWidth, baseHeight))
-	for _, img := range imgs {
-		draw.Draw(final, img.Bounds(), img, image.Point{}, draw.Over)
-	}
-
-	return final
 }
 
 func renderFrame(img image.Image) {
@@ -105,13 +81,13 @@ func renderFrame(img image.Image) {
 	}
 }
 
-func renderAnimation(frames []ase.Frame, width int, height int) {
+func renderAnimation(frames []*ase.Frame, width int, height int) {
 	fmt.Print("\033[?25l")
 	for {
 		for _, frame := range frames {
 			fmt.Print("\033[2J\033[H")
-			renderFrame(composeFrameImages(width, height, getFrameImages(frame, width, height)))
-			time.Sleep(time.Millisecond * time.Duration(frame.Header.FrameDuration))
+			renderFrame(frame.Image)
+			time.Sleep(time.Millisecond * time.Duration(frame.Duration))
 		}
 	}
 }
